@@ -1,0 +1,11 @@
+project:
+  sdk-version: 0.11.14
+  scenario: Manifests:setup
+  name: manifests
+  source: daml/Manifests.daml
+  parties:
+  - Alice
+  - Bob
+  - Docker
+  - Google
+version: 2
