@@ -108,6 +108,7 @@ template Repository
     signatory owner
     observer account.registry.owner
     controller owner can
+      -- Aka "Push"
       CreateImageRequest: ContractId ImageRequest
         with
           blobs: [Blob]
@@ -164,7 +165,6 @@ setup = scenario do
   let
     blob = Blob ""
     image = "busybox"
-    name = "dazwilkin-190325-manifests"
 
   registryDocker <-
     submit docker do
@@ -185,7 +185,7 @@ setup = scenario do
       fetch registryGoogleId
 
   -- Alice creates an AccountRequest
-  aliceAccountRequestId <-
+  aliceGoogleAccountRequestId <-
     submit alice do
       create AccountRequest with
         owner = alice
@@ -193,11 +193,11 @@ setup = scenario do
 
   -- Google Accept(s) it
   aliceAccountId <- submit google do
-    exercise aliceAccountRequestId Accept with
-      name = name
+    exercise aliceGoogleAccountRequestId Accept with
+      name = "project-id"
 
   -- Alice creates an ImageRequest
-  aliceImageRequestId <- submit alice do
+  aliceGoogleImageRequestId <- submit alice do
     aliceRepositoryId <- exercise aliceAccountId CreateRepository with
       image = image
     aliceRepository <- fetch aliceRepositoryId
@@ -208,4 +208,27 @@ setup = scenario do
     
   -- Google CreateManifest from it
   submit google do
-    exercise aliceImageRequestId CreateManifest
+    exercise aliceGoogleImageRequestId CreateManifest
+
+  
+  aliceDockerAccountRequestId <-
+    submit alice do
+      create AccountRequest with
+        owner = alice
+        registry = registryDocker
+
+  aliceAccountId <- submit docker do
+    exercise aliceDockerAccountRequestId Accept with
+      name = "alice"
+
+  aliceDockerImageRequestId <- submit alice do
+    aliceRepositoryId <- exercise aliceAccountId CreateRepository with
+      image = image
+    aliceRepository <- fetch aliceRepositoryId
+    create ImageRequest with
+      owner = alice
+      repository = aliceRepository
+      blobs = [blob,blob,blob,blob,blob]
+
+  submit docker do
+    exercise aliceDockerImageRequestId CreateManifest
