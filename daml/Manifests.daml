@@ -88,8 +88,7 @@ template Account
     registry: Registry
     name: Text
   where
-    signatory owner
-    observer registry.owner
+    signatory registry.owner, owner
     controller owner can
       CreateRepository: ContractId Repository
         with
