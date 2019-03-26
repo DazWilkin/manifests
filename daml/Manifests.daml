@@ -17,14 +17,23 @@ computeSHA256 b = SHA256 "0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF012345
 computeSize: Blob -> Int
 computeSize (Blob b) = Text.length b
 
--- Aha!
-computeLayers: [Blob] -> [Layer]
-computeLayers [] = []
-computeLayers (b::l) = (Layer with
+-- Better using 'map' (Thanks Neil)
+computeLayer: Blob -> Layer
+computeLayer b = Layer with
     mediaType = ""
     size = computeSize b
     digest = computeSHA256 b
-  )::computeLayers l
+
+computeLayers: [Blob] -> [Layer]
+computeLayers = map computeLayer
+
+btol: Blob -> Layer
+btol b = Layer with
+    mediaType = ""
+    size = computeSize b
+    digest = computeSHA256 b
+btolf = map btol
+
 
 -- Definition of a Manifest
 -- Unclear whether Config==Layer
