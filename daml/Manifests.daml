@@ -72,7 +72,9 @@ template AccountRequest
           registry = registry
           name = registry.root <> "/" <> name
       -- TODO(dazwilkin) -- How to do a Reject using the new syntax?
-      -- Reject: ()
+      Reject: ()
+        do
+          return ()
 
 -- Account owners can create arbitrary numbers of repositories
 -- Repositories have a path, e.g. "busybox"
