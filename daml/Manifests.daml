@@ -27,14 +27,6 @@ computeLayer b = Layer with
 computeLayers: [Blob] -> [Layer]
 computeLayers = map computeLayer
 
-btol: Blob -> Layer
-btol b = Layer with
-    mediaType = ""
-    size = computeSize b
-    digest = computeSHA256 b
-btolf = map btol
-
-
 -- Definition of a Manifest
 -- Unclear whether Config==Layer
 data Manifest = Manifest
