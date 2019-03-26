@@ -1,6 +1,8 @@
 daml 1.2
 module Manifests where
 
+import qualified DA.Text as Text
+
 -- For want of a better alternative
 data Blob = Blob Text deriving (Eq,Show)
 
@@ -13,7 +15,7 @@ computeSHA256: Blob -> SHA256
 computeSHA256 b = SHA256 "0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF"
 -- computeSize takes a blob and always returns its size as 65536
 computeSize: Blob -> Int
-computeSize b = 65536
+computeSize (Blob b) = Text.length b
 
 -- Aha!
 computeLayers: [Blob] -> [Layer]
