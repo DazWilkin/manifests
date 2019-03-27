@@ -3,19 +3,16 @@ module Manifests where
 
 import qualified DA.Text as Text
 
--- For want of a better alternative
-data Blob = Blob Text deriving (Eq,Show)
-
--- Create a 'SHA256' type
-data SHA256 = SHA256 Text deriving (Eq,Show)
+type Blob = Text
+type SHA256 = Text
 
 -- With 2 methods:
 -- computeSHA256 takes a blob and always returns a SHA256 of "123456789ABCDEF..."
 computeSHA256: Blob -> SHA256
-computeSHA256 b = SHA256 "0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF"
+computeSHA256 b = "0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF"
 -- computeSize takes a blob and always returns its size as 65536
 computeSize: Blob -> Int
-computeSize (Blob b) = Text.length b
+computeSize b = Text.length b
 
 -- Better using 'map' (Thanks Neil)
 computeLayer: Blob -> Layer
@@ -138,7 +135,7 @@ template ImageRequest
           config = Config with
             mediaType=""
             size=0
-            digest=SHA256 ""
+            digest=""
           manifest = Manifest with
             schemaVersion=2
             mediaType=""
@@ -167,7 +164,7 @@ setup = scenario do
   google <- getParty "Google"
 
   let
-    blob = Blob ""
+    blob = ""
     image = "busybox"
 
   registryDocker <-
