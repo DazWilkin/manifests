@@ -53,16 +53,24 @@ template Registry
     root: Text
   where
     signatory owner
+    controller owner can
+      nonconsuming CreateAccountRequest: ContractId AccountRequest
+        with
+          _owner: Party
+        do
+        create AccountRequest with
+          registry = this
+          owner = _owner
 
--- Folks must make AccountRequest(s) against a Registry
--- The Registry owner can Accept|Reject these requests
+-- Feedback from Daniel, a Registry solicits AccountRequests
+-- Prospective Account owners can Accept or Reject these requests
 template AccountRequest
   with
     owner: Party
     registry: Registry
   where
-    signatory owner
-    controller registry.owner can
+    signatory registry.owner
+    controller owner can
       Accept: ContractId Account
         with
           name: Text
@@ -71,7 +79,6 @@ template AccountRequest
           owner = owner
           registry = registry
           name = registry.root <> "/" <> name
-      -- TODO(dazwilkin) -- How to do a Reject using the new syntax?
       Reject: ()
         do
           return ()
@@ -87,7 +94,7 @@ template Account
   where
     signatory registry.owner, owner
     controller owner can
-      CreateRepository: ContractId Repository
+      nonconsuming CreateRepository: ContractId Repository
         with
           image: Text
         do
@@ -106,11 +113,11 @@ template Repository
     account: Account
     image: Text
   where
-    signatory owner
+    signatory  account.registry.owner, owner
     observer account.registry.owner
     controller owner can
       -- Aka "Push"
-      CreateImageRequest: ContractId ImageRequest
+      nonconsuming CreateImageRequest: ContractId ImageRequest
         with
           blobs: [Blob]
         do
@@ -126,7 +133,7 @@ template ImageRequest
     repository: Repository
     blobs: [Blob]
   where
-    signatory owner
+    signatory repository.account.registry.owner, owner
     controller repository.account.registry.owner can
       CreateManifest: ContractId Image
         do
@@ -154,7 +161,7 @@ template Image
     repository: Repository
     manifest: Manifest
   where
-    signatory repository.account.registry.owner
+    signatory repository.account.registry.owner, owner
     -- TODO(dazwilkin) How to add anyone in the Registry as an observer?
     observer owner
 
@@ -187,49 +194,48 @@ setup = scenario do
 
   -- Alice creates an AccountRequest
   aliceGoogleAccountRequestId <-
-    submit alice do
+    submit google do
       create AccountRequest with
-        owner = alice
         registry = registryGoogle
+        owner = alice
 
   -- Google Accept(s) it
-  aliceAccountId <- submit google do
-    exercise aliceGoogleAccountRequestId Accept with
-      name = "project-id"
+  aliceAccountId <-
+    submit alice do
+      exercise aliceGoogleAccountRequestId Accept with
+        name = "project-id"
 
   -- Alice creates an ImageRequest
-  aliceGoogleImageRequestId <- submit alice do
-    aliceRepositoryId <- exercise aliceAccountId CreateRepository with
-      image = image
-    aliceRepository <- fetch aliceRepositoryId
-    create ImageRequest with
-      owner = alice
-      repository = aliceRepository
-      blobs = [blob,blob,blob]
+  aliceGoogleImageRequestId <-
+    submit alice do
+      aliceRepositoryId <-
+        exercise aliceAccountId CreateRepository with
+          image = image
+      exercise aliceRepositoryId CreateImageRequest with
+          blobs = [blob,blob,blob]
     
   -- Google CreateManifest from it
   submit google do
     exercise aliceGoogleImageRequestId CreateManifest
-
   
   aliceDockerAccountRequestId <-
-    submit alice do
+    submit docker do
       create AccountRequest with
-        owner = alice
         registry = registryDocker
+        owner = alice
 
-  aliceAccountId <- submit docker do
-    exercise aliceDockerAccountRequestId Accept with
-      name = "alice"
+  aliceAccountId <-
+    submit alice do
+      exercise aliceDockerAccountRequestId Accept with
+        name = "alice"
 
-  aliceDockerImageRequestId <- submit alice do
-    aliceRepositoryId <- exercise aliceAccountId CreateRepository with
-      image = image
-    aliceRepository <- fetch aliceRepositoryId
-    create ImageRequest with
-      owner = alice
-      repository = aliceRepository
-      blobs = [blob,blob,blob,blob,blob]
+  aliceDockerImageRequestId <-
+    submit alice do
+      aliceRepositoryId <-
+        exercise aliceAccountId CreateRepository with
+          image = image
+      exercise aliceRepositoryId CreateImageRequest with
+        blobs = [blob,blob,blob,blob,blob]
 
   submit docker do
     exercise aliceDockerImageRequestId CreateManifest
